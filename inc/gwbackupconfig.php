@@ -2,7 +2,7 @@
 
 trait GWBackupConfig
 {
-    private static $extensions = array(), $_menu_tabs, $option_name, $option_value = array();
+    private static $extensions = array(), $_menu_tabs, $option_name, $option_value = array(), $_db_config = array();
 
     private function isExtensionLoaded($extension_name)
     {
@@ -17,7 +17,7 @@ trait GWBackupConfig
         if (!self::$option_name) {
             $prefix = 'gwbackup_';
             self::$option_name = array(
-                $prefix . 'general_setting', $prefix . 'db_backup'
+                $prefix . 'db_backup', $prefix . 'general_setting',
             );
         }
         return self::$option_name;
@@ -28,14 +28,15 @@ trait GWBackupConfig
         if (!self::$_menu_tabs) {
             $tab_list = array(
                 array(
-                    'title' => 'Settings', 'subtitle' => 'general settings', 'fields' => array(
-                    array('name' => 'scheduled_backup', 'title' => 'Scheduled Backup', 'type' => 'checkbox'),
-                    array('name' => 'schedule_type', 'title' => 'Auto Backup Schedule', 'type' => 'select'),
-                    array('name' => 'num_backup', 'title' => 'Number of backups will be stored', 'type' => 'select'),
-                )
+                    'title' => 'DB Backups', 'subtitle' => 'Backups List', 'fields' => array()
                 ),
                 array(
-                    'title' => 'DB Backups', 'subtitle' => 'Backups List', 'fields' => array()
+                    'title' => 'Settings', 'subtitle' => 'general settings', 'fields' => array(
+                    array('name' => 'scheduled_backup', 'title' => 'Scheduled Backup', 'type' => 'checkbox'),
+                    array('name' => 'schedule_type', 'title' => 'Auto Backup Schedule', 'type' => 'select', 'options' => array(
+                        'hourly' => 'Hourly', 'twice_daily' => 'Twice Daily', 'daily' => 'Daily', 'weekly' => 'Weekly'
+                    )),
+                )
                 ),
             );
 
@@ -86,5 +87,36 @@ trait GWBackupConfig
         $file = fopen(WPBOOSTER_LOGS . WPBOOSTER_NAME . '.txt', "a");
         echo fwrite($file, "[" . date('d-M-y h:i:s') . "] $type" . $message . "\n");
         fclose($file);
+    }
+
+    public static function db_config()
+    {
+        if (self::$_db_config) {
+            return self::$_db_config;
+        }
+
+        $option_name = 'gwbackup_config';
+
+        if ($db_config = get_option($option_name)) {
+            self::$_db_config = $db_config;
+            return self::$_db_config;
+        }
+
+        $db_config = array();
+        $wp_config = @file_get_contents(get_home_path() . '/wp-config.php', true);
+        if ($wp_config) {
+            $keys = array(
+                'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST'
+            );
+            foreach ($keys as $item) {
+                preg_match("/'" . $item . "',\s*'(.*)?'/", $wp_config, $matches);
+                $db_config[$item] = $matches[1];
+            }
+            if ($db_config) {
+                update_option('gwbackup_config', $db_config);
+                self::$_db_config = $db_config;
+            }
+        }
+        return self::$_db_config;
     }
 }

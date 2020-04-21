@@ -23,7 +23,38 @@ class GWBackup
         $this->version = $version;
         $this->filepath = $filepath;
         $this->init_hooks();
+        $this->create_db();
     }
+
+    private function create_db()
+    {
+        if (isset($_GET['action']) && $_GET['action'] == 'create-db') {
+            $db_config = conf::db_config();
+            echo '<pre>', print_r($db_config), '</pre>'; exit();
+
+
+            // Database configuration
+            $host = "localhost";
+            $username = "root";
+            $password = "test";
+            $database_name = "star_rating";
+
+// Get connection object and set the charset
+            $conn = mysqli_connect($host, $username, $password, $database_name);
+            $conn->set_charset("utf8");
+
+
+// Get All Table Names From the Database
+            $tables = array();
+            $sql = "SHOW TABLES";
+            $result = mysqli_query($conn, $sql);
+
+            while ($row = mysqli_fetch_row($result)) {
+                $tables[] = $row[0];
+            }
+        }
+    }
+
 
     private function init_hooks()
     {
@@ -38,8 +69,8 @@ class GWBackup
     public function admin_scripts()
     {
         $file = GWBACKUP_NAME . '-admin';
-        wp_enqueue_style($file, GWBACKUP_STYLES . "/$file.css");
-        wp_enqueue_script($file, GWBACKUP_SCRIPTS . "/$file.js", array('jquery'));
+        wp_enqueue_style($file, GWBACKUP_STYLES . "$file.css");
+        wp_enqueue_script($file, GWBACKUP_SCRIPTS . "$file.js", array('jquery'));
     }
 
 

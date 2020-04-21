@@ -99,7 +99,7 @@ class GWBackupSetting
             }
 
             $tab_links .= '<button class="gwb_tablinks ' . $active . '" id="' . $key . '">' . $tab['title'] . '</button>';
-            $tab_contents .= $this->set_form($key, $tab, $display);
+            $tab_contents .= $this->set_form($key, $tab, $display, $sl);
             $sl++;
         }
         ?>
@@ -114,22 +114,81 @@ class GWBackupSetting
         <?php
     }
 
+    private function db_backup_list()
+    {
+        ?>
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+        <p class="submit"><a
+                    href="http://localhost/wpme/wp-admin/tools.php?page=wp-database-backup&amp;action=createdbbackup&amp;_wpnonce=51abe35a96"
+                    id="create_backup" class="btn btn-primary"> <span class="glyphicon glyphicon-plus-sign"></span>
+                Create DB Backup</a></p>
+
+
+        <table class="table table-striped table-bordered table-hover display dataTable no-footer"
+               id="example" role="grid" aria-describedby="example_info">
+            <thead>
+            <tr>
+                <th>SL</th>
+                <th>Date</th>
+                <th>File</th>
+                <th>Size</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>1</td>
+                <td>date</td>
+                <td>
+                    <a href="http://localhost/wpme/wp-content/uploads/db-backup/WP_Me_2020_04_20_1587392389_72c7e24_wpdb.zip"
+                       style="color: #21759B;"><span class="glyphicon glyphicon-download-alt"></span>
+                        Download</a></td>
+
+                <td>kdfj</td>
+
+                <td><a title="Remove Database Backup"
+                       onclick="return confirm('Are you sure you want to delete database backup?')"
+                       href="http://localhost/wpme/wp-admin/tools.php?page=wp-database-backup&amp;action=removebackup&amp;_wpnonce=51abe35a96&amp;index=0"
+                       class="btn btn-default"><span style="color:red"
+                                                     class="glyphicon glyphicon-trash"></span> Remove
+                    </a><a> </a><a title="Restore Database Backup"
+                                   onclick="return confirm('Are you sure you want to restore database backup?')"
+                                   href="http://localhost/wpme/wp-admin/tools.php?page=wp-database-backup&amp;action=restorebackup&amp;_wpnonce=51abe35a96&amp;index=0"
+                                   class="btn btn-default"><span class="glyphicon glyphicon-refresh"
+                                                                 style="color:blue"></span> Restore
+                    </a><a></a></td>
+            </tr>
+
+            </tbody>
+        </table>
+        <?php
+    }
+
     /*setting up form contents*/
-    private function set_form($key, $tab, $display)
+    private function set_form($key, $tab, $display, $sl)
     {
         ob_start();
         ?>
         <div id="<?php echo $key ?>" class="tabcontent" style="display: <?php echo $display ?>">
             <h3><?php echo $tab['subtitle'] ?></h3>
             <hr>
-            <form method="post" action="options.php" class="ajax <?php echo $key ?>" id="<?php echo $key ?>">
-                <?php
-                $this->input_field(array('_token', 'hidden', wp_create_nonce('gwb_nonce')));
-                settings_fields('gwb_option_group');
-                do_settings_sections('gwb-setting-' . $key);
-                submit_button();
+            <?php
+            if ($sl === 0):
+                $this->db_backup_list();
+            else:
                 ?>
-            </form>
+                <form method="post" action="options.php" class="ajax <?php echo $key ?>" id="<?php echo $key ?>">
+                    <?php
+                    $this->input_field(array('_token', 'hidden', wp_create_nonce('gwb_nonce')));
+                    settings_fields('gwb_option_group');
+                    do_settings_sections('gwb-setting-' . $key);
+                    submit_button();
+                    ?>
+                </form>
+            <?php endif ?>
         </div>
         <?php
         return ob_get_clean();
@@ -160,13 +219,14 @@ class GWBackupSetting
             foreach ($tab['fields'] as $field) {
                 $hr = isset($field['break']) ? "<hr>" : '';
                 $name = $field['name'];
+
                 add_settings_field(
                     $name, // ID
                     '<label for="' . $name . '">' . $field['title'] . '</label>' . $hr,
                     array($this, 'input_field'), // Callback
                     $setting, // Page
                     'setting_section_id' . $setting, // Section
-                    array($name, $field['type'], '', $key)
+                    array($name, $field['type'], '', $key, isset($field['options']) ? $field['options'] : '')
                 );
             }
         }
@@ -189,6 +249,19 @@ class GWBackupSetting
                 '<input type="checkbox" id="' . $name . '" name="' . $full_name . '" %s />',
                 $val ? 'checked' : ''
             );
+        } elseif ($type === 'select') {
+            $options = isset($arg[4]) ? $arg[4] : array();
+            ?>
+            <select id="<?php echo $name ?>" name="<?php echo $name ?>">
+                <option value="" selected="selected" disabled="disabled">Choose an option;</option>
+                <?php
+                if ($options) {
+                    foreach ($options as $key => $item) {
+                        printf('<option value="%1$s" %2$s>%3$s</option>', $key, selected($val, $key, false), $item);
+                    }
+                }
+                ?></select>
+            <?php
         } elseif (isset($arg[2])) {
             printf(
                 '<input type="' . $type . '" name="' . $name . '" value="%s" />',
