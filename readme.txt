@@ -1,18 +1,17 @@
 === GW Backup ===
 Contributors: Rajib Hossain, Team Getweb, Inc
-Tags: speedup, minify, optimize, lazy-load
-Donate link: http://blog.futtta.be/2013/10/21/do-not-donate-to-me/
+Tags: backup, database-backup, db-backup
 Requires at least: 4.4
 Tested up to: 5.4
 Requires PHP: 5.6
 Stable tag: 1.0.0
 License: GPLv2 or later
 
-WP Booster speeds up wp site by combining & minify JS, CSS, lazy-load images, and leverage browser caching & gzip compression for apache server.
+GW Backup speeds up wp site by combining & minify JS, CSS, lazy-load images, and leverage browser caching & gzip compression for apache server.
 
 == Description ==
 
-Using WP Booster not so difficult. It can add gzip compression code to your .htaccess file. You need to enable gzip compression & browser caching under compressing assets tab in the setting page. WP Booster can minify & combine CSS & JS files under the head those have been enqueued by your theme & other plugins. Same thing will be apply for the image lazy-loading.
+Using GW Backup not so difficult. It can add gzip compression code to your .htaccess file. You need to enable gzip compression & browser caching under compressing assets tab in the setting page. GW Backup can minify & combine CSS & JS files under the head those have been enqueued by your theme & other plugins. Same thing will be apply for the image lazy-loading.
 
 == Installation ==
 
@@ -20,7 +19,7 @@ Just install from your WordPress "Plugins > Add New" screen and all will be done
 
 1. Upload the zip file and unzip it in the `/wp-content/plugins/` directory
 1. Activate the plugin through the 'Plugins' menu in WordPress
-1. Go to `Settings > WP Booster` and enable the options that you need.
+1. Go to `Settings > GW Backup` and enable the options that you need.
 
 == Frequently Asked Questions ==
 
@@ -40,17 +39,17 @@ Sometimes some external google-fonts css files can create the problem, you just 
 
 At the moment first of 2020 , the answer is no.
 
-= My Google Pagespeed Scored barely improved after using WP Booster=
+= My Google Pagespeed Scored barely improved after using GW Backup=
 
-WP Booster is not a simple fix for google-page-speed; it optimizes the real speed while browsing your site.
+GW Backup is not a simple fix for google-page-speed; it optimizes the real speed while browsing your site.
 
 = How does CDN work? =
-WP Booster doesn't compile or optimize any CDN (those are external from your own site) CSS & JS files.
+GW Backup doesn't compile or optimize any CDN (those are external from your own site) CSS & JS files.
 
 
 = How can I force the aggregated files to be static CSS or JS instead of PHP? =
 
-If your webserver is properly configured to handle compression (gzip or deflate) and cache expiry (expires and cache-control with sufficient cacheability), you don't need WP Booster enabling gzip or browser caching, just keep them disabled.
+If your webserver is properly configured to handle compression (gzip or deflate) and cache expiry (expires and cache-control with sufficient cacheability), you don't need GW Backup enabling gzip or browser caching, just keep them disabled.
 
 = I am getting some problems after activating this plugin? =
 Just de-activate it, all of it's options will be completely removed and will work as previously worked.

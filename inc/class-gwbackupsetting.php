@@ -31,11 +31,7 @@ class GWBackupSetting
     public function settings_link($links)
     {
         // Build and escape the URL.
-        $url = esc_url(add_query_arg(
-            'page',
-            GWBACKUP_NAME,
-            get_admin_url() . 'admin.php'
-        ));
+        $url = conf::setting_url();
         // Create the link.
         $settings_link = "<a href='$url'>" . __('Settings') . '</a>';
         // Adds the link to the end of the array.
@@ -60,7 +56,7 @@ class GWBackupSetting
             'GW Backup',
             'GW Backup Settings',
             'manage_options',
-            'gw-backup',
+            GWBACKUP_NAME,
             array($this, 'create_admin_page')
         );
     }
@@ -116,15 +112,18 @@ class GWBackupSetting
 
     private function db_backup_list()
     {
+        $url = wp_nonce_url(conf::setting_url());
+        $backups = scandir($dir = GWBACKUP_DIR . 'backup/');
         ?>
 
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-        <p class="submit"><a
-                    href="http://localhost/wpme/wp-admin/tools.php?page=wp-database-backup&amp;action=createdbbackup&amp;_wpnonce=51abe35a96"
-                    id="create_backup" class="btn btn-primary"> <span class="glyphicon glyphicon-plus-sign"></span>
-                Create DB Backup</a></p>
+
+        <p class="submit">
+            <a href="<?php echo $url ?>&action=create-backup"
+               class="btn btn-primary"> <span class="glyphicon glyphicon-plus-sign"></span>
+                Create DB Backup</a>
+        </p>
 
 
         <table class="table table-striped table-bordered table-hover display dataTable no-footer"
@@ -132,36 +131,47 @@ class GWBackupSetting
             <thead>
             <tr>
                 <th>SL</th>
-                <th>Date</th>
                 <th>File</th>
                 <th>Size</th>
+                <th>Backup</th>
                 <th>Action</th>
             </tr>
             </thead>
             <tbody>
-            <tr>
-                <td>1</td>
-                <td>date</td>
-                <td>
-                    <a href="http://localhost/wpme/wp-content/uploads/db-backup/WP_Me_2020_04_20_1587392389_72c7e24_wpdb.zip"
-                       style="color: #21759B;"><span class="glyphicon glyphicon-download-alt"></span>
-                        Download</a></td>
-
-                <td>kdfj</td>
-
-                <td><a title="Remove Database Backup"
-                       onclick="return confirm('Are you sure you want to delete database backup?')"
-                       href="http://localhost/wpme/wp-admin/tools.php?page=wp-database-backup&amp;action=removebackup&amp;_wpnonce=51abe35a96&amp;index=0"
-                       class="btn btn-default"><span style="color:red"
-                                                     class="glyphicon glyphicon-trash"></span> Remove
-                    </a><a> </a><a title="Restore Database Backup"
-                                   onclick="return confirm('Are you sure you want to restore database backup?')"
-                                   href="http://localhost/wpme/wp-admin/tools.php?page=wp-database-backup&amp;action=restorebackup&amp;_wpnonce=51abe35a96&amp;index=0"
-                                   class="btn btn-default"><span class="glyphicon glyphicon-refresh"
-                                                                 style="color:blue"></span> Restore
-                    </a><a></a></td>
-            </tr>
-
+            <?php
+            if ($backups) {
+                $sl = 0;
+                foreach ($backups as $item) {
+                    $item = ($item !== '.' && $item !== '..') ? $item : false;
+                    if ($item) {
+                        $sl++;
+                        ?>
+                        <tr>
+                            <td><?php echo $sl ?></td>
+                            <td><?php echo $item ?></td>
+                            <td><?php echo conf::getSize($dir . $item) ?></td>
+                            <td>
+                                <a href="<?php echo GWBACKUP_URL . 'backup/' . $item ?>" download
+                                   style="color: #21759B;" class="button" title="Download Backup"><span
+                                            class="glyphicon glyphicon-download-alt"></span> Download
+                                </a></td>
+                            <td><a title="Delete Backup"
+                                   onclick="return confirm('Sure you want to delete?')"
+                                   href="<?php echo $url ?>&action=delete-backup&file=<?php echo $item ?>"
+                                   class="btn btn-default"><span style="color:red"
+                                                                 class="glyphicon glyphicon-trash"></span> Delete
+                                </a><a> </a><a title="Restore Backup"
+                                               onclick="return confirm('Sure you want to restore?')"
+                                               href="<?php echo $url ?>&action=restore-backup&file=<?php echo $item ?>"
+                                               class="btn btn-default"><span class="glyphicon glyphicon-refresh"
+                                                                             style="color:blue"></span> Restore
+                                </a><a></a></td>
+                        </tr>
+                        <?php
+                    }
+                }
+            }
+            ?>
             </tbody>
         </table>
         <?php

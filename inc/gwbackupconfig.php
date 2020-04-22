@@ -2,7 +2,7 @@
 
 trait GWBackupConfig
 {
-    private static $extensions = array(), $_menu_tabs, $option_name, $option_value = array(), $_db_config = array();
+    private static $extensions = array(), $_menu_tabs, $option_name, $option_value = array(), $_db_config = array(), $_setting_url;
 
     private function isExtensionLoaded($extension_name)
     {
@@ -118,5 +118,39 @@ trait GWBackupConfig
             }
         }
         return self::$_db_config;
+    }
+
+    public static function setting_url()
+    {
+        if (!isset(self::$_setting_url)) {
+            self::$_setting_url = esc_url(add_query_arg(
+                'page',
+                GWBACKUP_NAME,
+                get_admin_url() . 'admin.php'
+            ));
+        }
+        return self::$_setting_url;
+    }
+
+    /*sanitizing input values using sanitize_text_field()*/
+    public static function sanitize_data($input)
+    {
+        if (is_array($input) && $input) {
+            $output = array();
+            foreach ($input as $key => $value) {
+                $output[$key] = sanitize_text_field($value);
+            }
+        } else {
+            $output = sanitize_text_field($input);
+        }
+        return $output;
+    }
+
+    public static function getSize($file)
+    {
+        $bytes = filesize($file);
+        $s = array('b', 'Kb', 'Mb', 'Gb');
+        $e = floor(log($bytes) / log(1024));
+        return sprintf('%.2f ' . $s[$e], ($bytes / pow(1024, floor($e))));
     }
 }
