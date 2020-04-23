@@ -12,6 +12,7 @@ class GWBackup
     protected $version = null;
     /*filepath string*/
     protected $filepath = null;
+    private $_backup_dir = GWBACKUP_DIR . 'backup/';
 
     /**
      * GWBackup constructor.
@@ -78,9 +79,9 @@ class GWBackup
     /*active/ de-active callback*/
     private function do_actions($status)
     {
-        $options = conf::option_name();
-        /*adding/removing encoding from .htaccess by GWBackupCompression*/
-        conf::boot_settings($options[0], $status);
+//        $options = conf::option_name();
+//        /*adding/removing encoding from .htaccess by GWBackupCompression*/
+//        conf::boot_settings($options[0], $status);
     }
 
     public function execution()
@@ -96,6 +97,8 @@ class GWBackup
                         case 'delete-backup':
                             $this->delete_backup($input['file']);
                             break;
+                        case 'restore-backup':
+                            $this->restore_backup($input['file']);
                         default:
                             break;
                     }
@@ -106,95 +109,119 @@ class GWBackup
         }
     }
 
-    private function create_backup()
+    public function general_admin_notice()
     {
-        ini_set("max_execution_time", "4000");
-        ini_set("max_input_time", "4000");
-        ini_set('memory_limit', '900M');
-        set_time_limit(0);
+        global $pagenow;
+        if ($pagenow == 'options-general.php') {
+            echo '<div class="notice notice-warning is-dismissible">
+             <p>This notice appears on the settings page.</p>
+         </div>';
+        }
+    }
 
+    private function restore_backup($file_name)
+    {
         $db = conf::db_config();
-        // Get connection object and set the charset
-        $conn = mysqli_connect($db['DB_HOST'], $db['DB_USER'], $db['DB_PASSWORD'], $db['DB_NAME']);
-        $conn->set_charset("utf8");
-
-        if (!$conn) {
-            error_log('DB could not connect');
-            return false;
-        }
-
-        // Get All Table Names From the Database
-        $tables = array();
-        $sql = "SHOW TABLES";
-        $result = mysqli_query($conn, $sql);
-
-        while ($row = mysqli_fetch_row($result)) {
-            $tables[] = $row[0];
-        }
-
-        if ($tables) {
-            $sqlScript = "";
-            foreach ($tables as $table) {
-
-                // Prepare SQLscript for creating table structure
-                $query = "SHOW CREATE TABLE $table";
-                $result = mysqli_query($conn, $query);
-                $row = mysqli_fetch_row($result);
-
-                $sqlScript .= "\n\n" . $row[1] . ";\n\n";
-
-                $query = "SELECT * FROM $table";
-                $result = mysqli_query($conn, $query);
-
-                $columnCount = mysqli_num_fields($result);
-
-                // Prepare SQLscript for dumping data for each table
-                for ($i = 0; $i < $columnCount; $i++) {
-                    while ($row = mysqli_fetch_row($result)) {
-                        $sqlScript .= "INSERT INTO $table VALUES(";
-                        for ($j = 0; $j < $columnCount; $j++) {
-                            $row[$j] = $row[$j];
-
-                            if (isset($row[$j])) {
-                                $sqlScript .= '"' . $row[$j] . '"';
-                            } else {
-                                $sqlScript .= '""';
-                            }
-                            if ($j < ($columnCount - 1)) {
-                                $sqlScript .= ',';
-                            }
-                        }
-                        $sqlScript .= ");\n";
-                    }
-                }
-
-                $sqlScript .= "\n";
+        $conn = @mysqli_connect($db['DB_HOST'], $db['DB_USER'], $db['DB_PASSWORD']);
+        if ($conn) {
+            $this->set_ini();
+            $db_name = $db['DB_NAME'];
+            /*select db */
+            if (!mysqli_select_db($conn, $db_name)) {
+                $sql = "CREATE DATABASE IF NOT EXISTS `{$db_name}`";
+                mysqli_query($sql, $conn);
+                mysqli_select_db($conn, $db_name);
             }
-            if (!empty($sqlScript)) {
-                // Save the SQL script to a backup file
-                $file = GWBACKUP_DIR . 'backup/' . $db['DB_NAME'] . "__" . date('Y-m-d h-ia') . ".sql";
-                if (file_put_contents($file, $sqlScript)) {
-                    $this->delete_backup('', 10);
+
+            /* removing tables */
+            $tables = array();
+
+            if ($result = mysqli_query($conn, "SHOW TABLES FROM `{$db_name}`")) {
+                while ($row = mysqli_fetch_row($result)) {
+                    $tables[] = $row[0];
+                }
+                if (count($tables) > 0) {
+                    foreach ($tables as $table) {
+                        mysqli_query($conn, "DROP TABLE `{$db_name}`.{$table}");
+                    }
+
+                    /*restoring db */
+                    if ($file_name) {
+                        if ($file_name && file_exists($file = $this->_backup_dir . $file_name)) {
+                            $content = @file_get_contents($file, true);
+                            $sql = explode(";\n", $content);
+
+                            for ($i = 0; $i < count($sql); $i++) {
+                                mysqli_query($conn, $sql[$i]);
+                            }
+                            /*removing backup file*/
+                            @unlink($file);
+                        }
+                    }
                 }
             }
         }
         return;
     }
 
-    private function delete_backup($file_name = '', $count = null)
+    private function set_ini()
+    {
+        ini_set("max_execution_time", "4000");
+        ini_set("max_input_time", "4000");
+        ini_set('memory_limit', '900M');
+        set_time_limit(0);
+        return;
+    }
+
+    private function create_backup()
+    {
+        global $wpdb;
+        $tables = $wpdb->get_col("SHOW TABLES");
+        $sqlScript = '';
+        if ($tables) {
+            $this->set_ini();
+            foreach ($tables as $table) {
+                $result = $wpdb->get_results("SELECT * FROM {$table}", ARRAY_N);
+                $row1 = $wpdb->get_row("SHOW CREATE TABLE {$table}", ARRAY_N);
+                $sqlScript .= "\n\n" . $row1[1] . ";\n\n";
+                //$columnCount = count($result[0]);
+                for ($i = 0; $i < count($result); $i++) {
+                    $row = $result[$i];
+                    $sqlScript .= "INSERT INTO {$table} VALUES(";
+                    for ($j = 0; $j < count($result[0]); $j++) {
+                        $row[$j] = $wpdb->_real_escape($row[$j]);
+                        $sqlScript .= (isset($row[$j])) ? '"' . $row[$j] . '"' : '""';
+                        if ($j < (count($result[0]) - 1)) {
+                            $sqlScript .= ',';
+                        }
+                    }
+                    $sqlScript .= ");\n";
+                }
+                $sqlScript .= "\n";
+            }
+            if (!empty($sqlScript)) {
+                // Save the SQL script to a backup file
+                $db = conf::db_config();
+                // Get connection object and set the charset
+                $file = GWBACKUP_DIR . 'backup/' . $db['DB_NAME'] . "__" . date('Y-m-d h-i-s') . ".sql";
+                file_put_contents($file, $sqlScript);
+                $this->delete_backup('', 10);
+            }
+        }
+        return;
+    }
+
+    private function delete_backup($file_name = null, $limit = null)
     {
         $backup_dir = GWBACKUP_DIR . 'backup/';
-        if (isset($file_name) && file_exists($file = $backup_dir . $file_name)) {
-            unlink($file);
-        }
+        if ($file_name && file_exists($file = $backup_dir . $file_name)) @unlink($file);
 
-        if (!isset($file_name) && isset($count)) {
-            $backups = scandir($backup_dir, '');
-            if (count($backups) > $count) {
-                foreach ($backups as $item) {
-                    if (isset($input['file']) && file_exists($file = $backup_dir . $item)) {
-                        unlink($file);
-                    }
+        if ($limit) {
+            $backups = scandir($backup_dir);
+            if (count($backups) > $limit) {
+                $backups = array_diff($backups, array_slice($backups, -$limit));
+                if ($backups) {
+                    foreach ($backups as $item) if (file_exists($file = $backup_dir . $item)) @unlink($file);
                 }
             }
         }

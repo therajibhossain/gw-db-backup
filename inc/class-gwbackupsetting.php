@@ -42,7 +42,6 @@ class GWBackupSetting
         return $links;
     }
 
-
     /**
      * Add options page
      */
@@ -94,7 +93,9 @@ class GWBackupSetting
                 $display = 'block';
             }
 
-            $tab_links .= '<button class="gwb_tablinks ' . $active . '" id="' . $key . '">' . $tab['title'] . '</button>';
+            if ($tab['status']) {
+                $tab_links .= '<button class="gwb_tablinks ' . $active . '" id="' . $key . '">' . $tab['title'] . '</button>';
+            }
             $tab_contents .= $this->set_form($key, $tab, $display, $sl);
             $sl++;
         }

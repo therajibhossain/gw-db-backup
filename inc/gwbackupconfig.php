@@ -28,14 +28,15 @@ trait GWBackupConfig
         if (!self::$_menu_tabs) {
             $tab_list = array(
                 array(
-                    'title' => 'DB Backups', 'subtitle' => 'Backups List', 'fields' => array()
+                    'title' => 'DB Backups', 'subtitle' => 'Backups List', 'status' => 1, 'fields' => array()
                 ),
                 array(
-                    'title' => 'Settings', 'subtitle' => 'general settings', 'fields' => array(
+                    'title' => 'Settings', 'subtitle' => 'general settings', 'status' => 0, 'fields' => array(
                     array('name' => 'scheduled_backup', 'title' => 'Scheduled Backup', 'type' => 'checkbox'),
                     array('name' => 'schedule_type', 'title' => 'Auto Backup Schedule', 'type' => 'select', 'options' => array(
                         'hourly' => 'Hourly', 'twice_daily' => 'Twice Daily', 'daily' => 'Daily', 'weekly' => 'Weekly'
-                    )),
+                    )
+                    ),
                 )
                 ),
             );
