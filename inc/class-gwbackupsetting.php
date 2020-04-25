@@ -102,7 +102,7 @@ class GWBackupSetting
         ?>
         <div class="wrap">
             <h1>GW Backup Settings</h1>
-            <?php echo $notice_div ?>
+            <?php echo conf::notice_div(); ?>
             <div class="tab">
                 <?php echo $tab_links ?>
             </div>
@@ -117,12 +117,9 @@ class GWBackupSetting
         $backups = scandir($dir = GWBACKUP_DIR . 'backup/');
         ?>
 
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-
         <p class="submit">
             <a href="<?php echo $url ?>&action=create-backup"
-               class="btn btn-primary"> <span class="glyphicon glyphicon-plus-sign"></span>
+               class="btn btn-success"> <span class="glyphicon glyphicon-plus-sign"></span>
                 Create DB Backup</a>
         </p>
 
@@ -142,7 +139,7 @@ class GWBackupSetting
             <?php
             if ($backups) {
                 $sl = 0;
-                foreach ($backups as $item) {
+                foreach (array_reverse($backups) as $item) {
                     $item = ($item !== '.' && $item !== '..') ? $item : false;
                     if ($item) {
                         $sl++;
@@ -153,19 +150,20 @@ class GWBackupSetting
                             <td><?php echo conf::getSize($dir . $item) ?></td>
                             <td>
                                 <a href="<?php echo GWBACKUP_URL . 'backup/' . $item ?>" download
-                                   style="color: #21759B;" class="button" title="Download Backup"><span
+                                   style="color: #5cb85c;" class="button" title="Download Backup"><span
                                             class="glyphicon glyphicon-download-alt"></span> Download
                                 </a></td>
                             <td><a title="Delete Backup"
                                    onclick="return confirm('Sure you want to delete?')"
                                    href="<?php echo $url ?>&action=delete-backup&file=<?php echo $item ?>"
-                                   class="btn btn-default"><span style="color:red"
-                                                                 class="glyphicon glyphicon-trash"></span> Delete
+                                   class="btn btn-default"><span style=""
+                                                                 class="glyphicon glyphicon-trash text-danger"></span>
+                                    Delete
                                 </a><a> </a><a title="Restore Backup"
                                                onclick="return confirm('Sure you want to restore?')"
                                                href="<?php echo $url ?>&action=restore-backup&file=<?php echo $item ?>"
                                                class="btn btn-default"><span class="glyphicon glyphicon-refresh"
-                                                                             style="color:blue"></span> Restore
+                                                                             style="color:#5cb85c"></span> Restore
                                 </a><a></a></td>
                         </tr>
                         <?php

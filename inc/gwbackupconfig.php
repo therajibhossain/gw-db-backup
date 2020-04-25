@@ -96,8 +96,7 @@ trait GWBackupConfig
             return self::$_db_config;
         }
 
-        $option_name = 'gwbackup_config';
-
+        $option_name = 'gw_db_backup_config';
         if ($db_config = get_option($option_name)) {
             self::$_db_config = $db_config;
             return self::$_db_config;
@@ -114,7 +113,7 @@ trait GWBackupConfig
                 $db_config[$item] = $matches[1];
             }
             if ($db_config) {
-                update_option('gwbackup_config', $db_config);
+                update_option($option_name, $db_config);
                 self::$_db_config = $db_config;
             }
         }
@@ -153,5 +152,17 @@ trait GWBackupConfig
         $s = array('b', 'Kb', 'Mb', 'Gb');
         $e = floor(log($bytes) / log(1024));
         return sprintf('%.2f ' . $s[$e], ($bytes / pow(1024, floor($e))));
+    }
+
+    public static function notice_div()
+    {
+        if (isset($_GET)) {
+            $input = self::sanitize_data($_GET);
+            if (isset($input['type']) && isset($input['message'])) {
+                return '<div class="notice ' . $input['type'] . ' is-dismissible" >
+                    <p>' . $input['message'] . '</p>
+                </div>';
+            }
+        }
     }
 }

@@ -41,6 +41,7 @@ class GWBackup
     {
         $file = GWBACKUP_NAME . '-admin';
         wp_enqueue_style($file, GWBACKUP_STYLES . "$file.css");
+        wp_enqueue_style('gwdb-bootstrap', "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css");
         wp_enqueue_script($file, GWBACKUP_SCRIPTS . "$file.js", array('jquery'));
     }
 
@@ -57,19 +58,8 @@ class GWBackup
 
     public static function plugin_uninstall()
     {
-        foreach (conf::option_name() as $item) {
-            if (get_option($item) != false) {
-                delete_option($item);
-            }
-        }
-        $prefix = 'GWBackup';
-        $other_options = array(
-            $prefix . "_enqueued_scripts",
-            $prefix . "_enqueued_styles",
-            $prefix . "_src_combine_js",
-            $prefix . "_src_combine_css",
-        );
-        foreach ($other_options as $item) {
+        $options = array('gw_db_backup_config');
+        foreach ($options as $item) {
             if (get_option($item) != false) {
                 delete_option($item);
             }
@@ -80,47 +70,37 @@ class GWBackup
     private function do_actions($status)
     {
 //        $options = conf::option_name();
-//        /*adding/removing encoding from .htaccess by GWBackupCompression*/
-//        conf::boot_settings($options[0], $status);
     }
 
     public function execution()
     {
         if (is_admin() && current_user_can('manage_options')) {
             if (isset($_GET['action'])) {
+                $res = array('', '');
                 $input = conf::sanitize_data($_GET);
                 if (isset($input['_wpnonce']) && wp_verify_nonce($input['_wpnonce'])) {
                     switch ($input['action']) {
                         case 'create-backup':
-                            $this->create_backup();
+                            $res = $this->create_backup();
                             break;
                         case 'delete-backup':
-                            $this->delete_backup($input['file']);
+                            $res = $this->delete_backup($input['file']);
                             break;
                         case 'restore-backup':
-                            $this->restore_backup($input['file']);
+                            $res = $this->restore_backup($input['file']);
                         default:
                             break;
                     }
                 }
 
-                wp_redirect(conf::setting_url());
+                wp_redirect(conf::setting_url() . "&type=" . $res[0] . "&message=" . $res[1]);
             }
-        }
-    }
-
-    public function general_admin_notice()
-    {
-        global $pagenow;
-        if ($pagenow == 'options-general.php') {
-            echo '<div class="notice notice-warning is-dismissible">
-             <p>This notice appears on the settings page.</p>
-         </div>';
         }
     }
 
     private function restore_backup($file_name)
     {
+        $res = array('', 'Failed to restore DB backup');
         $db = conf::db_config();
         $conn = @mysqli_connect($db['DB_HOST'], $db['DB_USER'], $db['DB_PASSWORD']);
         if ($conn) {
@@ -156,12 +136,13 @@ class GWBackup
                             }
                             /*removing backup file*/
                             @unlink($file);
+                            $res = array('updated', 'DB backup restored');
                         }
                     }
                 }
             }
         }
-        return;
+        return $res;
     }
 
     private function set_ini()
@@ -175,6 +156,7 @@ class GWBackup
 
     private function create_backup()
     {
+        $res = array('', 'Failed to create DB backup');
         global $wpdb;
         $tables = $wpdb->get_col("SHOW TABLES");
         $sqlScript = '';
@@ -184,7 +166,6 @@ class GWBackup
                 $result = $wpdb->get_results("SELECT * FROM {$table}", ARRAY_N);
                 $row1 = $wpdb->get_row("SHOW CREATE TABLE {$table}", ARRAY_N);
                 $sqlScript .= "\n\n" . $row1[1] . ";\n\n";
-                //$columnCount = count($result[0]);
                 for ($i = 0; $i < count($result); $i++) {
                     $row = $result[$i];
                     $sqlScript .= "INSERT INTO {$table} VALUES(";
@@ -206,15 +187,20 @@ class GWBackup
                 $file = GWBACKUP_DIR . 'backup/' . $db['DB_NAME'] . "__" . date('Y-m-d h-i-s') . ".sql";
                 file_put_contents($file, $sqlScript);
                 $this->delete_backup('', 10);
+                $res = array('updated', 'DB backup created');
             }
         }
-        return;
+        return $res;
     }
 
     private function delete_backup($file_name = null, $limit = null)
     {
+        $res = array('', 'Failed to delete DB backup');
         $backup_dir = GWBACKUP_DIR . 'backup/';
-        if ($file_name && file_exists($file = $backup_dir . $file_name)) @unlink($file);
+        if ($file_name && file_exists($file = $backup_dir . $file_name)) {
+            @unlink($file);
+            $res = array('updated', 'DB backup deleted');
+        }
 
         if ($limit) {
             $backups = scandir($backup_dir);
@@ -225,7 +211,7 @@ class GWBackup
                 }
             }
         }
-        return;
+        return $res;
     }
 
 }
