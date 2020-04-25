@@ -1,6 +1,6 @@
 <?php
 
-trait GWBackupConfig
+trait Config
 {
     private static $extensions = array(), $_menu_tabs, $option_name, $option_value = array(), $_db_config = array(), $_setting_url;
 
@@ -15,7 +15,7 @@ trait GWBackupConfig
     public static function option_name()
     {
         if (!self::$option_name) {
-            $prefix = 'gwbackup_';
+            $prefix = 'gwdb_';
             self::$option_name = array(
                 $prefix . 'db_backup', $prefix . 'general_setting',
             );
@@ -57,9 +57,7 @@ trait GWBackupConfig
         if ($option_name == '*') {
 
         } elseif ($option_name === $options[0]) {
-            new WPBoosterCompression($option_name, $status);
         } elseif ($option_name === $options[1]) {
-            new WPBoosterCombined($option_name, $status);
         }
     }
 
@@ -96,7 +94,7 @@ trait GWBackupConfig
             return self::$_db_config;
         }
 
-        $option_name = 'gw_db_backup_config';
+        $option_name = 'gwdb_config';
         if ($db_config = get_option($option_name)) {
             self::$_db_config = $db_config;
             return self::$_db_config;
@@ -125,7 +123,7 @@ trait GWBackupConfig
         if (!isset(self::$_setting_url)) {
             self::$_setting_url = esc_url(add_query_arg(
                 'page',
-                GWBACKUP_NAME,
+                GWDB_NAME,
                 get_admin_url() . 'admin.php'
             ));
         }

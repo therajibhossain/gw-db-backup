@@ -4,15 +4,15 @@ if (!defined('ABSPATH')) {
     exit();
 }
 
-use GWBackupConfig as conf;
+use Config as conf;
 
-class GWBackup
+class GWDBBackup
 {
     /*version string*/
     protected $version = null;
     /*filepath string*/
     protected $filepath = null;
-    private $_backup_dir = GWBACKUP_DIR . 'backup/';
+    private $_backup_dir = GWDB_DIR . 'backup/';
 
     /**
      * GWBackup constructor.
@@ -33,16 +33,16 @@ class GWBackup
         register_uninstall_hook($this->filepath, 'GWBackup::plugin_uninstall'); //deactivate hook
 
         add_action('admin_enqueue_scripts', array($this, 'admin_scripts'));
-        new GWBackupSetting();
+        new GWDBBackupSettings();
         add_action('admin_init', array($this, 'execution'));
     }
 
     public function admin_scripts()
     {
-        $file = GWBACKUP_NAME . '-admin';
-        wp_enqueue_style($file, GWBACKUP_STYLES . "$file.css");
+        $file = 'admin';
+        wp_enqueue_style($file, GWDB_STYLES . "$file.css");
         wp_enqueue_style('gwdb-bootstrap', "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css");
-        wp_enqueue_script($file, GWBACKUP_SCRIPTS . "$file.js", array('jquery'));
+        wp_enqueue_script($file, GWDB_SCRIPTS . "$file.js", array('jquery'));
     }
 
 
@@ -58,7 +58,7 @@ class GWBackup
 
     public static function plugin_uninstall()
     {
-        $options = array('gw_db_backup_config');
+        $options = array('gwdb_config');
         foreach ($options as $item) {
             if (get_option($item) != false) {
                 delete_option($item);
@@ -184,7 +184,7 @@ class GWBackup
                 // Save the SQL script to a backup file
                 $db = conf::db_config();
                 // Get connection object and set the charset
-                $file = GWBACKUP_DIR . 'backup/' . $db['DB_NAME'] . "__" . date('Y-m-d h-i-s') . ".sql";
+                $file = GWDB_DIR . 'backup/' . $db['DB_NAME'] . "__" . date('Y-m-d h-i-s') . ".sql";
                 file_put_contents($file, $sqlScript);
                 $this->delete_backup('', 10);
                 $res = array('updated', 'DB backup created');
@@ -196,7 +196,7 @@ class GWBackup
     private function delete_backup($file_name = null, $limit = null)
     {
         $res = array('', 'Failed to delete DB backup');
-        $backup_dir = GWBACKUP_DIR . 'backup/';
+        $backup_dir = GWDB_DIR . 'backup/';
         if ($file_name && file_exists($file = $backup_dir . $file_name)) {
             @unlink($file);
             $res = array('updated', 'DB backup deleted');

@@ -1,8 +1,8 @@
 <?php
 
-use GWBackupConfig as conf;
+use Config as conf;
 
-class GWBackupSetting
+class GWDBBackupSettings
 {
     /**
      * Holds the values to be used in the fields callbacks
@@ -24,7 +24,7 @@ class GWBackupSetting
         add_action('admin_menu', array($this, 'admin_menu'));
         add_action('admin_init', array($this, 'page_init'));
         add_action('wp_ajax_update_setting', array($this, 'update_setting'));
-        add_filter('plugin_action_links_' . GWBACKUP_FILE, array($this, 'settings_link'));
+        add_filter('plugin_action_links_' . GWDB_FILE, array($this, 'settings_link'));
     }
 
     /*link to plugin list*/
@@ -52,10 +52,10 @@ class GWBackupSetting
         }
         // This page will be under "Settings"
         add_options_page(
-            'GW Backup',
-            'GW Backup Settings',
+            'GW DB Backup',
+            'GW DB Backup',
             'manage_options',
-            GWBACKUP_NAME,
+            GWDB_NAME,
             array($this, 'create_admin_page')
         );
     }
@@ -114,7 +114,7 @@ class GWBackupSetting
     private function db_backup_list()
     {
         $url = wp_nonce_url(conf::setting_url());
-        $backups = scandir($dir = GWBACKUP_DIR . 'backup/');
+        $backups = scandir($dir = GWDB_DIR . 'backup/');
         ?>
 
         <p class="submit">
@@ -149,7 +149,7 @@ class GWBackupSetting
                             <td><?php echo $item ?></td>
                             <td><?php echo conf::getSize($dir . $item) ?></td>
                             <td>
-                                <a href="<?php echo GWBACKUP_URL . 'backup/' . $item ?>" download
+                                <a href="<?php echo GWDB_URL . 'backup/' . $item ?>" download
                                    style="color: #5cb85c;" class="button" title="Download Backup"><span
                                             class="glyphicon glyphicon-download-alt"></span> Download
                                 </a></td>
@@ -191,9 +191,9 @@ class GWBackupSetting
                 ?>
                 <form method="post" action="options.php" class="ajax <?php echo $key ?>" id="<?php echo $key ?>">
                     <?php
-                    $this->input_field(array('_token', 'hidden', wp_create_nonce('gwb_nonce')));
-                    settings_fields('gwb_option_group');
-                    do_settings_sections('gwb-setting-' . $key);
+                    $this->input_field(array('_token', 'hidden', wp_create_nonce('gwdb_nonce')));
+                    settings_fields('gwdb_option_group');
+                    do_settings_sections('gwdb-setting-' . $key);
                     submit_button();
                     ?>
                 </form>
@@ -209,13 +209,13 @@ class GWBackupSetting
     public function page_init()
     {
         register_setting(
-            'gwb_option_group', // Option group
-            'gwb_option_setting' // Option name
+            'gwdb_option_group', // Option group
+            'gwdb_option_setting' // Option name
         );
 
         /*adding setting menu options*/
         foreach (self::$_menu_tabs as $key => $tab) {
-            $setting = 'gwb-setting-' . $key;
+            $setting = 'gwdb-setting-' . $key;
             add_settings_section(
                 'setting_section_id' . $setting, // ID
                 '', // Title
@@ -262,7 +262,7 @@ class GWBackupSetting
             $options = isset($arg[4]) ? $arg[4] : array();
             ?>
             <select id="<?php echo $name ?>" name="<?php echo $name ?>">
-                <option value="" selected="selected" disabled="disabled">Choose an option;</option>
+                <option value="" selected="selected" disabled="disabled">Choose an option</option>
                 <?php
                 if ($options) {
                     foreach ($options as $key => $item) {
@@ -284,19 +284,25 @@ class GWBackupSetting
         }
     }
 
+
+
     /*updating all admin settings*/
     public function update_setting()
     {
         $return = ['response' => 0, 'message' => 'noting changed!'];
         $form_data = array();
+
+        /*actually we are sanitizing this $_POST['formData'] just after few lines*/
         parse_str($_POST['formData'], $form_data);
 
         /*validating CSRF*/
-        $token = $form_data['_token'];
-        if (!isset($token) || !wp_verify_nonce($token, 'gwb_nonce')) wp_die("<br><br>YOU ARE NOT ALLOWED! ");
-        $option_name = $_POST['gwb_section'];
+        $token = sanitize_text_field($form_data['_token']);
+        if (!isset($token) || !wp_verify_nonce($token, 'wpb_nonce')) wp_die("<br><br>YOU ARE NOT ALLOWED! ");
+        $option_name = sanitize_text_field($_POST['wpb_section']);
 
-        if (update_option($option_name, isset($form_data[$option_name]) ? $form_data[$option_name] : '')) {
+        /*sanitizing $_POST['formData'] by option name*/
+        $option_value = conf::sanitize_data($form_data[$option_name]);
+        if (update_option($option_name, isset($option_value) ? $option_value : '')) {
             conf::boot_settings($option_name);
             $return = ['response' => 1, 'message' => $option_name . '--- settings updated!'];
         }
