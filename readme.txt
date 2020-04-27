@@ -7,11 +7,9 @@ Requires PHP: 5.6
 Stable tag: 1.0.0
 License: GPLv2 or later
 
-GW Database Backup manages backup & restoring of your database efficiently.
-
 == Description ==
 
-Using GW Database Backup not so difficult. It can add gzip compression code to your .htaccess file. You need to enable gzip compression & browser caching under compressing assets tab in the setting page. GW Database Backup can minify & combine CSS & JS files under the head those have been enqueued by your theme & other plugins. Same thing will be apply for the image lazy-loading.
+GW Database Backup manages backup & restoring of your database efficiently.
 
 == Installation ==
 
