@@ -45,12 +45,12 @@ if (PHP_VERSION < 5.6) {
     add_action('admin_notices', function () {
         Config::notice_div('error', 'GWDBBackup requires at least PHP 5.6. Please upgrade PHP. The Plugin has been deactivated.');
     });
-    init()->plugin_deactivate();
+    plugin_init()->plugin_deactivate();
     return;
 }
 
 
-function init()
+function gwdb_init()
 {
     static $Plugin = null;
     if (null === $Plugin) {
@@ -60,5 +60,5 @@ function init()
 }
 
 if (is_admin()) {
-    init();
+    gwdb_init();
 }
