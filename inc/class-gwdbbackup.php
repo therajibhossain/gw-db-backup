@@ -41,7 +41,7 @@ class GWDBBackup
     {
         $file = 'admin';
         wp_enqueue_style($file, GWDB_STYLES . "$file.css");
-        wp_enqueue_style('gwdb-bootstrap', "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css");
+        wp_enqueue_style('gwdb-bootstrap', GWDB_STYLES . "bootstrap.min.css");
         wp_enqueue_script($file, GWDB_SCRIPTS . "$file.js", array('jquery'));
     }
 
@@ -59,11 +59,11 @@ class GWDBBackup
     public static function plugin_uninstall()
     {
         $options = array('gwdb_config');
-        foreach ($options as $item) {
-            if (get_option($item) != false) {
-                delete_option($item);
-            }
-        }
+//        foreach ($options as $item) {
+//            if (get_option($item) != false) {
+//                delete_option($item);
+//            }
+//        }
     }
 
     /*active/ de-active callback*/
@@ -92,7 +92,6 @@ class GWDBBackup
                             break;
                     }
                 }
-
                 wp_redirect(conf::setting_url() . "&type=" . $res[0] . "&message=" . $res[1]);
             }
         }
@@ -101,11 +100,10 @@ class GWDBBackup
     private function restore_backup($file_name)
     {
         $res = array('', 'Failed to restore DB backup');
-        $db = conf::db_config();
-        $conn = @mysqli_connect($db['DB_HOST'], $db['DB_USER'], $db['DB_PASSWORD']);
+        $conn = @mysqli_connect(DB_HOST, DB_USER, DB_PASSWORD);
         if ($conn) {
             $this->set_ini();
-            $db_name = $db['DB_NAME'];
+            $db_name = DB_NAME;
             /*select db */
             if (!mysqli_select_db($conn, $db_name)) {
                 $sql = "CREATE DATABASE IF NOT EXISTS `{$db_name}`";
@@ -182,9 +180,7 @@ class GWDBBackup
             }
             if (!empty($sqlScript)) {
                 // Save the SQL script to a backup file
-                $db = conf::db_config();
-                // Get connection object and set the charset
-                $file = GWDB_DIR . 'backup/' . $db['DB_NAME'] . "__" . date('Y-m-d h-i-s') . ".sql";
+                $file = GWDB_DIR . 'backup/' . DB_NAME . "__" . date('Y-m-d h-i-s') . ".sql";
                 file_put_contents($file, $sqlScript);
                 $this->delete_backup('', 10);
                 $res = array('updated', 'DB backup created');

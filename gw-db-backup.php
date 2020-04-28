@@ -3,7 +3,6 @@
  * Copyright (C) M. A. Monim. All Rights Reserved
  *
  * Plugin Name: GW Database Backup
- * Plugin URI: https://www.upwork.com/freelancers/~01a7e2b3d17cd8070a
  * Description: GW DB Backup manages backup & restoring of your database efficiently
  * Version: 1.0.0
  * Author: M. A. Monim.
@@ -43,7 +42,7 @@ define('GWDB_LOGS', GWDB_DIR . 'logs/');
 
 if (PHP_VERSION < 5.6) {
     add_action('admin_notices', function () {
-        Config::notice_div('error', 'GWDBBackup requires at least PHP 5.6. Please upgrade PHP. The Plugin has been deactivated.');
+        Config::notice_div('error', 'GW DB Backup requires at least PHP 5.6. Please upgrade PHP. The Plugin has been deactivated.');
     });
     plugin_init()->plugin_deactivate();
     return;

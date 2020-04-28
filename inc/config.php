@@ -2,7 +2,7 @@
 
 trait Config
 {
-    private static $extensions = array(), $_menu_tabs, $option_name, $option_value = array(), $_db_config = array(), $_setting_url;
+    private static $extensions = array(), $_menu_tabs, $option_name, $option_value = array(), $_setting_url;
 
     private function isExtensionLoaded($extension_name)
     {
@@ -83,39 +83,9 @@ trait Config
         if (is_array($message)) {
             $message = json_encode($message);
         }
-        $file = fopen(WPBOOSTER_LOGS . WPBOOSTER_NAME . '.txt', "a");
+        $file = fopen(GWDB_LOGS . 'log.txt', "a");
         echo fwrite($file, "[" . date('d-M-y h:i:s') . "] $type" . $message . "\n");
         fclose($file);
-    }
-
-    public static function db_config()
-    {
-        if (self::$_db_config) {
-            return self::$_db_config;
-        }
-
-        $option_name = 'gwdb_config';
-        if ($db_config = get_option($option_name)) {
-            self::$_db_config = $db_config;
-            return self::$_db_config;
-        }
-
-        $db_config = array();
-        $wp_config = @file_get_contents(get_home_path() . '/wp-config.php', true);
-        if ($wp_config) {
-            $keys = array(
-                'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST'
-            );
-            foreach ($keys as $item) {
-                preg_match("/'" . $item . "',\s*'(.*)?'/", $wp_config, $matches);
-                $db_config[$item] = $matches[1];
-            }
-            if ($db_config) {
-                update_option($option_name, $db_config);
-                self::$_db_config = $db_config;
-            }
-        }
-        return self::$_db_config;
     }
 
     public static function setting_url()
