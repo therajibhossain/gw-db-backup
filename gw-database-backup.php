@@ -7,7 +7,7 @@
  * Version: 1.0.0
  * Author: M. A. Monim.
  * Author URI: https://www.upwork.com/freelancers/~01a7e2b3d17cd8070a
- * Text Domain: gw-db-backup
+ * Text Domain: gw-database-backup
  * Domain Path: /languages
  * License: GPL v2 or later
  * WP requires at least: 5.0.0
@@ -32,9 +32,9 @@ require_once GWDB_DIR . '/inc/autoload.php';
 
 /*plugin environment variables*/
 define('GWDB_VERSION', '1.0.0');
-define('GWDB_NAME', 'gw-db-backup');
+define('GWDB_NAME', 'gw-database-backup');
 define('GWDB_FILE', plugin_basename(__FILE__));
-define('GWDB_URL', plugins_url('gw-db-backup/'));
+define('GWDB_URL', plugins_url('gw-database-backup/'));
 define('GWDB_STYLES', GWDB_URL . 'css/');
 define('GWDB_SCRIPTS', GWDB_URL . 'js/');
 define('GWDB_LOGS', GWDB_DIR . 'logs/');
